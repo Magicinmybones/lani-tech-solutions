@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f0f11">
+<title>Lani Tech Solutions</title>
+<style>
+@font-face{font-family:'Albert Sans';font-style:normal;font-weight:400;font-display:block;src:url(assets/albert-sans-400.woff2) format('woff2');}
+@font-face{font-family:'Albert Sans';font-style:normal;font-weight:600;font-display:block;src:url(assets/albert-sans-600.woff2) format('woff2');}
+
+/* ==========================================================================
+   Architecture
+   --------------------------------------------------------------------------
+   The reference is a 1536 x 1024 frame. Every desktop measurement is written
+   in "design px" and multiplied by --u, a fluid unit:
+
+        --u = min(100vw / 1536, 100svh / 880)
+
+   * width-bound  -> the frame fills the viewport width exactly (1 design px
+                     = 1 css px at 1536 wide), as in the reference.
+   * height-bound -> the frame shrinks so the whole composition still fits
+                     on screen; backgrounds are full-bleed, so nothing reads
+                     as empty bars.
+   The page is a flex column at least 100svh tall: the header pins to the
+   top, the footer + glow + wordmark pin to the bottom, and only the empty
+   middle band stretches or compresses (never below 56 design px). So there
+   is no blank space at the top or bottom on any aspect ratio.
+
+   Below 1180px the absolute "frame" layout switches to a reflowed, fluid
+   layout (hamburger menu, stacked columns) with real readable px sizes.
+   ========================================================================== */
+:root {
+  --u: min(calc(100vw / 1536), calc(100vh / 880));
+  --bg: #0f0f11;
+  --accent: #6879f2;
+  --text: #f8f8f8;
+  --muted: #bbbcc2;
+  --muted-2: #c4c6cc;
+  --glass-fill-top: rgba(255,250,255,.082);
+  --glass-fill-bot: rgba(255,255,255,.094);
+  --tile-fill: rgba(255,255,255,.045);
+  --tile-line: rgba(255,255,255,.11);
+  --font: 'Albert Sans', 'Satoshi', 'General Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+@supports (height: 100svh) { :root { --u: min(calc(100vw / 1536), calc(100svh / 880)); } }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); }
+body {
+  font-family: var(--font); color: var(--text);
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; margin: 0; padding: 0; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+/* ---------- page shell ---------- */
+.page {
+  position: relative; isolation: isolate; overflow: hidden;
+  min-height: 100vh; min-height: 100svh;
+  display: flex; flex-direction: column; justify-content: space-between;
+  background: var(--bg);
+}
+.glow {
+  position: absolute; z-index: -2; left: 0; right: 0; bottom: 0; height: calc(1024 * var(--u));
+  background:
+    radial-gradient(calc(260 * var(--u)) calc(230 * var(--u)) at calc(50% + calc(832 * var(--u))) calc(960 * var(--u)), rgba(8,8,12,.10), rgba(8,8,12,0) 100%),
+    radial-gradient(calc(230 * var(--u)) calc(170 * var(--u)) at calc(50% - calc(728 * var(--u))) calc(1010 * var(--u)), rgba(84,72,255,.105), rgba(84,72,255,0) 100%),
+    radial-gradient(calc(2798.0103037839763 * var(--u)) calc(6300 * var(--u)) at calc(50% + calc(-2.0399999999999636 * var(--u))) calc(100% + calc(5169.24 * var(--u))), #3a4297 82.080%, #394299 82.191%, #3a429a 82.302%, #3a439c 82.413%, #3b439e 82.524%, #3b429f 82.636%, #3b42a1 82.747%, #3c42a3 82.858%, #3d43a5 82.969%, #3d43a6 83.080%, #3e43a8 83.191%, #3f43aa 83.302%, #4043ac 83.413%, #4044ae 83.524%, #4144b0 83.636%, #4244b3 83.747%, #4344b5 83.858%, #4445b8 83.969%, #4545ba 84.080%, #4645bc 84.191%, #4745be 84.302%, #4845c1 84.413%, #4846c3 84.524%, #4946c4 84.636%, #4945c5 84.747%, #4945c6 84.858%, #4945c6 84.969%, #4945c5 85.080%, #4844c3 85.191%, #4742c0 85.302%, #4540bb 85.413%, #433eb5 85.524%, #403bad 85.636%, #3e38a4 85.747%, #3b359b 85.858%, #383291 85.969%, #352f88 86.080%, #322c80 86.191%, #302a78 86.302%, #2e2871 86.413%, #2c276c 86.524%, #2b2667 86.636%, #2a2563 86.747%, #292460 86.858%, #27235d 86.969%, #26225a 87.080%, #262157 87.191%, #252155 87.302%, #242052 87.413%, #232050 87.524%, #231f4e 87.636%, #221f4c 87.747%, #211e4a 87.858%, #211e48 87.969%, #201d46 88.080%, #1f1c44 88.191%, #1e1c42 88.302%, #1e1c3f 88.413%, #1e1b3e 88.524%, #1d1b3b 88.636%, #1c1a3a 88.747%, #1b1936 89.032%, #1a1832 89.318%, #19172f 89.604%, #18162c 89.890%, #171629 90.175%, #161526 90.461%, #151422 90.747%, #141320 91.032%, #14131d 91.318%, #13121c 91.604%, #13121a 91.890%, #121219 92.175%, #111117 92.461%, #111116 92.747%, #111015 93.032%, #101014 93.318%, #101014 93.604%, #100f13 93.890%, #101012 94.175%, #100f12 94.461%, #100f12 94.747%, #100f12 95.032%, #100f12 95.318%, #0f0f12 95.604%, #0f0f12 95.890%, #0f0f12 96.175%, #0f0f12 96.461%, #0f0f12 96.747%, #0f0f11 97.032%, #0f0f12 97.318%, #0f0f12 97.604%, #100f12 97.890%, #100f12 98.175%, #101012 98.218%, #0f0f11 100%);
+  pointer-events: none;
+}
+.wordmark {
+  position: absolute; z-index: -1; bottom: 0; left: calc(50% - calc(1168 * var(--u)));
+  width: calc(2800 * var(--u)); height: calc(338 * var(--u)); pointer-events: none;
+}
+.wordmark path { fill: rgba(255,255,255,0.062); }
+
+/* frame = the 1536-wide reference canvas, centred */
+.frame { position: relative; width: calc(1536 * var(--u)); margin: 0 auto; }
+.top { height: calc(100 * var(--u)); flex: none; }
+.bottom { height: calc(724 * var(--u)); flex: none; }
+
+/* ---------- header ---------- */
+.brand { position: absolute; display: block; }
+.brand .mark { position: absolute; left: 0; top: 0; display: block; }
+.brand .name, .brand .sub { position: absolute; white-space: nowrap; line-height: 1; }
+.brand .name { font-weight: 600; color: #fff; }
+.brand .sub { font-weight: 400; text-transform: uppercase; }
+
+.brand--header { left: calc(272.3 * var(--u)); top: calc(41.3 * var(--u)); width: calc(130 * var(--u)); height: calc(42.3 * var(--u)); }
+.brand--header .mark { width: calc(41 * var(--u)); height: calc(42.3 * var(--u)); }
+.brand--header .name { left: calc(50.9 * var(--u)); top: calc(10.0 * var(--u)); font-size: calc(15.2 * var(--u)); letter-spacing: calc(0 * var(--u)); }
+.brand--header .sub { left: calc(51.2 * var(--u)); top: calc(26.1 * var(--u)); font-size: calc(8.5 * var(--u)); letter-spacing: calc(0 * var(--u)); color: #9a9a9e; }
+
+.nav-pill {
+  position: absolute; left: calc(543 * var(--u)); top: calc(33 * var(--u)); width: calc(452 * var(--u)); height: calc(58 * var(--u));
+  border-radius: calc(29 * var(--u));
+  background: linear-gradient(180deg, var(--glass-fill-top), var(--glass-fill-bot));
+  -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: 0 calc(8 * var(--u)) calc(24 * var(--u)) rgba(0,0,0,.18);
+}
+/* gradient hairline: brighter on top (light catching the glass edge) */
+.nav-pill::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: max(1px, calc(1 * var(--u)));
+  background: linear-gradient(180deg, rgba(255,255,255,.44) 0%, rgba(255,255,255,.30) 50%, rgba(255,255,255,.17) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+}
+.nav-pill ul { position: absolute; inset: 0; }
+.nav-pill li { position: absolute; top: 0; height: 100%; }
+.nav-pill a {
+  display: block; line-height: 1; white-space: nowrap; color: var(--text);
+  font-size: calc(15.22 * var(--u)); padding-top: calc(22.36 * var(--u));
+  transition: color .2s ease;
+}
+.nav-pill a:hover { color: #fff; text-shadow: 0 0 18px rgba(104,121,242,.55); }
+.nav-pill a[aria-current="page"] { color: var(--accent); }
+.nav-pill li:nth-child(1) { left: calc(35.10000000000002 * var(--u)); }
+.nav-pill li:nth-child(2) { left: calc(109.10000000000002 * var(--u)); }
+.nav-pill li:nth-child(3) { left: calc(197.10000000000002 * var(--u)); }
+.nav-pill li:nth-child(4) { left: calc(288.1 * var(--u)); }
+.nav-pill li:nth-child(5) { left: calc(364.1 * var(--u)); }
+
+.cta {
+  position: absolute; left: calc(1131.5 * var(--u)); top: calc(37 * var(--u)); width: calc(137 * var(--u)); height: calc(51 * var(--u));
+  border-radius: calc(25.5 * var(--u)); background: #fafafa; color: #0d0d10;
+  display: block; font-size: calc(15.26 * var(--u)); line-height: 1; white-space: nowrap;
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.cta span { position: absolute; left: calc(29.59999999999991 * var(--u)); top: calc(18.259999999999998 * var(--u)); }
+.cta:hover { background: #fff; box-shadow: 0 0 0 calc(4 * var(--u)) rgba(104,121,242,.25), 0 calc(10 * var(--u)) calc(30 * var(--u)) rgba(104,121,242,.35); transform: translateY(-1px); }
+.menu-btn, .mobile-menu { display: none; }
+
+/* ---------- footer ---------- */
+.brand--footer { left: calc(133.6 * var(--u)); top: calc(32.0 * var(--u)); width: calc(140 * var(--u)); height: calc(42 * var(--u)); }
+.brand--footer .mark { width: calc(42 * var(--u)); height: calc(42 * var(--u)); }
+.brand--footer .name { left: calc(52.6 * var(--u)); top: calc(9.0 * var(--u)); font-size: calc(15.5 * var(--u)); letter-spacing: calc(0 * var(--u)); }
+.brand--footer .sub { left: calc(52.0 * var(--u)); top: calc(26.9 * var(--u)); font-size: calc(8.9 * var(--u)); letter-spacing: calc(0 * var(--u)); color: #d6d6d8; }
+
+.tagline {
+  position: absolute; margin: 0; left: calc(134.2 * var(--u)); top: calc(88.10000000000002 * var(--u)); width: calc(300 * var(--u));
+  font-size: calc(15.17 * var(--u)); line-height: calc(20.5 * var(--u)); color: #c2c3c9;
+}
+.qc-title {
+  position: absolute; margin: 0; left: calc(135.1 * var(--u)); top: calc(164.87 * var(--u));
+  font-size: calc(15.86 * var(--u)); line-height: 1; font-weight: 400; color: #fff; letter-spacing: calc(0 * var(--u)); white-space: nowrap;
+}
+.socials { position: absolute; left: calc(134 * var(--u)); top: calc(193 * var(--u)); display: flex; gap: calc(15 * var(--u)); }
+.socials a {
+  position: relative; display: grid; place-items: center;
+  width: calc(52 * var(--u)); height: calc(51 * var(--u)); border-radius: calc(5 * var(--u));
+  background: var(--tile-fill); border: max(1px, calc(1 * var(--u))) solid var(--tile-line);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  color: #fff; transition: background .2s ease, border-color .2s ease, transform .2s ease, color .2s ease;
+}
+.socials a:hover { background: rgba(104,121,242,.14); border-color: rgba(104,121,242,.55); transform: translateY(-2px); }
+.socials svg { display: block; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+.socials svg .fill { fill: currentColor; }
+.socials .fb { color: #6b66f6; }
+.socials .fb svg { stroke-width: 1.75; }
+.socials .fb svg { width: calc(18 * var(--u)); height: calc(18 * var(--u)); }
+.socials .ig svg { width: calc(18.5 * var(--u)); height: calc(19 * var(--u)); margin-top: calc(-0.5 * var(--u)); }
+.socials .x svg { width: calc(15.5 * var(--u)); height: calc(16.5 * var(--u)); margin-top: calc(2 * var(--u)); }
+.socials .yt svg { width: calc(18 * var(--u)); height: calc(13 * var(--u)); margin-top: calc(1.5 * var(--u)); }
+
+.col { position: absolute; top: 0; }
+.col h2 { position: absolute; margin: 0; left: 0; top: calc(32.24000000000001 * var(--u)); font-size: calc(16.05 * var(--u)); line-height: 1; font-weight: 400; color: #fff; white-space: nowrap; }
+.col li { position: absolute; left: 0; white-space: nowrap; line-height: 1; font-size: calc(15.74 * var(--u)); }
+.col a, .col li > span { color: var(--muted); transition: color .2s ease; }
+.col a:hover { color: #fff; }
+.col--touch a, .col--touch li > span { color: var(--muted-2); }
+.col--quick { left: calc(771.3000000000001 * var(--u)); }
+.col--support { left: calc(946.1 * var(--u)); }
+.col--touch { left: calc(1148.1 * var(--u)); }
+.col--quick li:nth-child(1) { top: calc(76.49000000000001 * var(--u)); }
+.col--quick li:nth-child(2) { top: calc(110.49000000000001 * var(--u)); }
+.col--quick li:nth-child(3) { top: calc(146.49 * var(--u)); }
+.col--quick li:nth-child(4) { top: calc(183.49 * var(--u)); }
+.col--quick li:nth-child(5) { top: calc(221.49 * var(--u)); }
+.col--support li:nth-child(1) { top: calc(75.99000000000001 * var(--u)); }
+.col--support li:nth-child(2) { top: calc(110.99000000000001 * var(--u)); }
+.col--touch li:nth-child(1) { top: calc(76.99000000000001 * var(--u)); }
+.col--touch li:nth-child(2) { top: calc(111.99000000000001 * var(--u)); }
+.col--touch li:nth-child(3) { top: calc(147.49 * var(--u)); }
+.col--touch li:nth-child(4) { top: calc(185.49 * var(--u)); }
+
+.col--touch li:nth-child(1) { letter-spacing: calc(-0.14 * var(--u)); }
+.col--support li:nth-child(2) { letter-spacing: calc(0.15 * var(--u)); }
+.tagline .l1 { letter-spacing: calc(-0.05 * var(--u)); }
+.tagline .l2 { letter-spacing: calc(0.09 * var(--u)); }
+.col--quick h2 { letter-spacing: calc(-0.08 * var(--u)); }
+.col--quick li:nth-child(1) { letter-spacing: calc(0.03 * var(--u)); }
+
+.tagline span { display: block; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ==========================================================================
+   Reflow layout: tablets, phones, small/short windows (< 1180px)
+   --------------------------------------------------------------------------
+   The page is locked to exactly one viewport (100dvh, never scrolls).
+   Every size below is written as  N px * --k.  --k starts at 1 and the small
+   fit() script lowers it just enough for the content to fit the viewport
+   height, so tablets and phones never get a vertical scrollbar. The empty
+   band between header and footer absorbs any leftover height.
+   ========================================================================== */
+@media (max-width: 1179.98px) {
+  :root { --k: 1; --g: max(calc(100vw / 1536), 0.36px); --pad: clamp(16px, 5vw, 48px); }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  .page { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; justify-content: flex-start; }
+  .glow { height: calc(1024 * var(--g));
+    background: radial-gradient(calc(2798.0103037839763 * var(--g)) calc(6300 * var(--g)) at calc(50% + -2.0399999999999636 * var(--g)) calc(100% + 5169.24 * var(--g)), #3a4297 82.080%, #394299 82.191%, #3a429a 82.302%, #3a439c 82.413%, #3b439e 82.524%, #3b429f 82.636%, #3b42a1 82.747%, #3c42a3 82.858%, #3d43a5 82.969%, #3d43a6 83.080%, #3e43a8 83.191%, #3f43aa 83.302%, #4043ac 83.413%, #4044ae 83.524%, #4144b0 83.636%, #4244b3 83.747%, #4344b5 83.858%, #4445b8 83.969%, #4545ba 84.080%, #4645bc 84.191%, #4745be 84.302%, #4845c1 84.413%, #4846c3 84.524%, #4946c4 84.636%, #4945c5 84.747%, #4945c6 84.858%, #4945c6 84.969%, #4945c5 85.080%, #4844c3 85.191%, #4742c0 85.302%, #4540bb 85.413%, #433eb5 85.524%, #403bad 85.636%, #3e38a4 85.747%, #3b359b 85.858%, #383291 85.969%, #352f88 86.080%, #322c80 86.191%, #302a78 86.302%, #2e2871 86.413%, #2c276c 86.524%, #2b2667 86.636%, #2a2563 86.747%, #292460 86.858%, #27235d 86.969%, #26225a 87.080%, #262157 87.191%, #252155 87.302%, #242052 87.413%, #232050 87.524%, #231f4e 87.636%, #221f4c 87.747%, #211e4a 87.858%, #211e48 87.969%, #201d46 88.080%, #1f1c44 88.191%, #1e1c42 88.302%, #1e1c3f 88.413%, #1e1b3e 88.524%, #1d1b3b 88.636%, #1c1a3a 88.747%, #1b1936 89.032%, #1a1832 89.318%, #19172f 89.604%, #18162c 89.890%, #171629 90.175%, #161526 90.461%, #151422 90.747%, #141320 91.032%, #14131d 91.318%, #13121c 91.604%, #13121a 91.890%, #121219 92.175%, #111117 92.461%, #111116 92.747%, #111015 93.032%, #101014 93.318%, #101014 93.604%, #100f13 93.890%, #101012 94.175%, #100f12 94.461%, #100f12 94.747%, #100f12 95.032%, #100f12 95.318%, #0f0f12 95.604%, #0f0f12 95.890%, #0f0f12 96.175%, #0f0f12 96.461%, #0f0f12 96.747%, #0f0f11 97.032%, #0f0f12 97.318%, #0f0f12 97.604%, #100f12 97.890%, #100f12 98.175%, #101012 98.218%, #0f0f11 100%); }
+  .wordmark { left: calc(50% - 1168 * var(--g)); width: calc(2800 * var(--g)); height: calc(338 * var(--g)); }
+  .frame { width: auto; margin: 0; }
+
+  .top { height: auto; flex: none; display: flex; align-items: center; gap: calc(16px * var(--k));
+    padding: max(calc(18px * var(--k)), env(safe-area-inset-top)) var(--pad) 0; position: relative; z-index: 5; }
+  .brand, .brand .mark, .brand .name, .brand .sub { position: static; }
+  .brand { display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; column-gap: calc(10px * var(--k)); align-items: center; justify-content: start; width: max-content !important; height: auto !important; }
+  .brand .mark { grid-row: 1 / span 2; width: calc(40px * var(--k)) !important; height: calc(40px * var(--k)) !important; }
+  .brand .name { font-size: calc(16px * var(--k)); letter-spacing: 0; align-self: end; }
+  .brand .sub { font-size: calc(8.5px * var(--k)); letter-spacing: .02em; align-self: start; margin-top: calc(3px * var(--k)); }
+
+  .nav-pill { position: static; width: auto; height: calc(52px * var(--k)); border-radius: calc(26px * var(--k)); margin-left: auto; padding: 0 calc(26px * var(--k)); display: flex; align-items: center; }
+  .nav-pill ul { position: static; display: flex; gap: clamp(16px, 2.4vw, 30px); }
+  .nav-pill li { position: static; height: auto; }
+  .nav-pill a { font-size: calc(15px * var(--k)); padding: 0; }
+  .cta { position: static; width: auto; height: calc(48px * var(--k)); border-radius: calc(24px * var(--k)); padding: 0 calc(22px * var(--k)); font-size: calc(15px * var(--k)); display: inline-flex; align-items: center; margin-left: calc(12px * var(--k)); }
+  .cta span { position: static; }
+
+  /* footer: pinned to the bottom, the free space stays above it */
+  .bottom { height: auto; flex: none; margin-top: auto; display: grid;
+    grid-template-columns: repeat(4, auto); justify-content: space-between;
+    column-gap: clamp(16px, 3vw, 56px); row-gap: calc(34px * var(--k)); padding: calc(28px * var(--k)) var(--pad) env(safe-area-inset-bottom); align-content: start; }
+  .brand--footer .mark { width: calc(42px * var(--k)) !important; height: calc(42px * var(--k)) !important; }
+  .tagline, .qc-title, .socials, .col, .col h2, .col li { position: static; }
+  .tagline span { display: inline; }
+  .tagline, .tagline span, .col li, .col h2 { letter-spacing: normal !important; }
+  .tagline { width: auto; max-width: calc(300px * var(--k)); margin-top: calc(14px * var(--k)); font-size: calc(15px * var(--k)); line-height: 1.38; }
+  .qc-title { margin-top: calc(26px * var(--k)); font-size: calc(15.5px * var(--k)); }
+  .socials { margin-top: calc(12px * var(--k)); gap: calc(12px * var(--k)); }
+  .socials a { width: calc(46px * var(--k)); height: calc(46px * var(--k)); border-radius: calc(6px * var(--k)); border-width: 1px; }
+  .socials .fb svg, .socials .ig svg, .socials .yt svg { width: calc(18px * var(--k)); height: calc(18px * var(--k)); margin: 0; }
+  .socials .x svg { width: calc(16px * var(--k)); height: calc(16px * var(--k)); margin: 0; }
+  .socials .yt svg { height: calc(13px * var(--k)); }
+  .col h2 { font-size: calc(16px * var(--k)); margin-bottom: calc(20px * var(--k)); }
+  .col ul { display: grid; gap: calc(14px * var(--k)); }
+  .col li { font-size: calc(15px * var(--k)); line-height: 1.25; white-space: nowrap; }
+  .col h2 { white-space: nowrap; }
+  /* reserve the band where the giant wordmark sits, so text never lands on it */
+  .bottom::after { content: ""; grid-column: 1 / -1; height: calc(min(338 * var(--g), 15vh) * var(--k)); margin-top: calc(-1 * calc(10px * var(--k))); }
+}
+/* tablet portrait: brand row, then three columns */
+@media (max-width: 899.98px) {
+  .bottom { grid-template-columns: minmax(0, .8fr) minmax(0, 1fr) minmax(0, 1.6fr); justify-content: stretch; }
+  .footer-brand { grid-column: 1 / -1; }
+  .nav-pill, .cta { display: none; }
+  .menu-btn {
+    display: grid; place-items: center; margin-left: auto; width: calc(48px * var(--k)); height: calc(48px * var(--k)); border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.28); background: linear-gradient(180deg, var(--glass-fill-top), var(--glass-fill-bot));
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); color: #fff; cursor: pointer; padding: 0; flex: none;
+  }
+  .menu-btn svg { width: calc(20px * var(--k)); height: calc(20px * var(--k)); stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; transition: transform .25s ease; }
+  .menu-btn[aria-expanded="true"] .l1 { transform: translateY(4px) rotate(45deg); transform-origin: 12px 8px; }
+  .menu-btn[aria-expanded="true"] .l2 { transform: translateY(-4px) rotate(-45deg); transform-origin: 12px 16px; }
+  .mobile-menu {
+    display: block; position: absolute; left: var(--pad); right: var(--pad); top: calc(100% + calc(12px * var(--k)));
+    max-height: calc(100dvh - 100% - 24px); overflow: auto; overscroll-behavior: contain;
+    padding: calc(10px * var(--k)); border-radius: calc(22px * var(--k)); background: rgba(28,27,32,.82);
+    border: 1px solid rgba(255,255,255,.2); -webkit-backdrop-filter: blur(18px) saturate(140%); backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: 0 20px 50px rgba(0,0,0,.45);
+    opacity: 0; transform: translateY(-8px); visibility: hidden; transition: opacity .2s ease, transform .2s ease, visibility 0s .2s;
+  }
+  .mobile-menu.open { opacity: 1; transform: none; visibility: visible; transition: opacity .2s ease, transform .2s ease; }
+  .mobile-menu a { display: block; padding: calc(13px * var(--k)) calc(16px * var(--k)); border-radius: calc(14px * var(--k)); font-size: calc(16px * var(--k)); color: var(--text); }
+  .mobile-menu a:hover { background: rgba(255,255,255,.06); }
+  .mobile-menu a[aria-current="page"] { color: var(--accent); }
+  .mobile-menu .cta-m { margin-top: calc(6px * var(--k)); text-align: center; background: #fafafa; color: #0d0d10; border-radius: 999px; }
+  .mobile-menu .cta-m:hover { background: #fff; }
+}
+/* phones: brand row, quick + support side by side, contact full width */
+@media (max-width: 599.98px) {
+  .bottom { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); justify-content: stretch; row-gap: calc(28px * var(--k)); }
+  .col--touch { grid-column: 1 / -1; }
+}
+/* short landscape screens (phones on their side): everything on one row */
+@media (max-width: 1179.98px) and (max-height: 520px) and (min-width: 560px) {
+  .bottom { grid-template-columns: repeat(4, auto); justify-content: space-between; row-gap: 0; padding-top: calc(16px * var(--k)); }
+  .tagline { max-width: calc(215px * var(--k)); }
+  .footer-brand { grid-column: auto; }
+  .col--touch { grid-column: auto; }
+  .top { padding-top: max(calc(12px * var(--k)), env(safe-area-inset-top)); }
+  .bottom::after { height: calc(min(338 * var(--g), 12vh) * var(--k) + 10px); margin-top: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="glow" aria-hidden="true"></div>
+  <svg class="wordmark" viewBox="-400 686 2800 338" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M-330 686H-258V982H-75V1050H-330Z M98.7 686H176.4L325.6 1050H242.6L209.7 965H60.6L27.3 1050H-57.1ZM135.5 773.3L186.5 905H84.0Z M366 686H439.5L590 927.6V686H660V1050H586.4L437 816.6V1050H366Z M741 686H816V1050H741Z M1007 686H1284V745H1179V1050H1105V745H1007Z M1332 686H1568V745H1404V822H1552V883H1404V982H1572V1050H1332Z M1924.4 732.6A182 182 0 1 0 1924.4 994.4L1873.0 941.2A108 108 0 1 1 1873.0 785.8Z M1980 686H2052V830H2198V686H2270V1050H2198V889H2052V1050H1980Z"/></svg>
+
+  <header class="frame top">
+    <a class="brand brand--header" href="#" aria-label="Lani Tech Solutions home">
+      <svg class="mark" viewBox="0 0 42 42" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="lg-ah" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5a4ff9"/><stop offset=".45" stop-color="#5d4dfd"/><stop offset="1" stop-color="#7b69ff"/>
+    </linearGradient>
+    <linearGradient id="lg-bh" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".10"/><stop offset=".5" stop-color="#1b0f8a" stop-opacity=".16"/><stop offset=".78" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#1a1460" stop-opacity=".45"/>
+    </linearGradient>
+  </defs>
+  <rect width="42" height="42" rx="10" fill="url(#lg-ah)"/>
+  <rect width="42" height="42" rx="10" fill="url(#lg-bh)"/>
+  <path fill="#fff" d="M9 15.5 17.5 10.5V25H24.5V32.5H9Z"/>
+  <path fill="#fff" d="M25 17.5H33V24.5H25Z"/>
+  <path fill="#fff" d="M28 28.5H32.5V32.5H28Z"/>
+</svg>
+      <span class="name">LANI TECH</span><span class="sub">Solutions</span>
+    </a>
+    <nav class="nav-pill" aria-label="Primary">
+      <ul><li><a href="#" aria-current="page">Home</a></li><li><a href="#">Services</a></li><li><a href="#">Projects</a></li><li><a href="#">About</a></li><li><a href="#">Contact</a></li></ul>
+    </nav>
+    <a class="cta" href="#"><span>Book a Call</span></a>
+    <button class="menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path class="l1" d="M4 8h16"/><path class="l2" d="M4 16h16"/></svg>
+    </button>
+    <div class="mobile-menu" id="mobile-menu">
+      <a href="#" aria-current="page">Home</a><a href="#">Services</a><a href="#">Projects</a><a href="#">About</a><a href="#">Contact</a>
+      <a class="cta-m" href="#">Book a Call</a>
+    </div>
+  </header>
+
+  <footer class="frame bottom">
+    <div class="footer-brand">
+      <a class="brand brand--footer" href="#" aria-label="Lani Tech Solutions home">
+        <svg class="mark" viewBox="0 0 42 42" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="lg-af" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5a4ff9"/><stop offset=".45" stop-color="#5d4dfd"/><stop offset="1" stop-color="#7b69ff"/>
+    </linearGradient>
+    <linearGradient id="lg-bf" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".10"/><stop offset=".5" stop-color="#1b0f8a" stop-opacity=".16"/><stop offset=".78" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#1a1460" stop-opacity=".45"/>
+    </linearGradient>
+  </defs>
+  <rect width="42" height="42" rx="10" fill="url(#lg-af)"/>
+  <rect width="42" height="42" rx="10" fill="url(#lg-bf)"/>
+  <path fill="#fff" d="M9 15.5 17.5 10.5V25H24.5V32.5H9Z"/>
+  <path fill="#fff" d="M25 17.5H33V24.5H25Z"/>
+  <path fill="#fff" d="M28 28.5H32.5V32.5H28Z"/>
+</svg>
+        <span class="name">LANI TECH</span><span class="sub">Solutions</span>
+      </a>
+      <p class="tagline"><span class="l1">Maximize your digital infrastructure and</span> <span class="l2">enhance organizational efficiency.</span></p>
+      <h2 class="qc-title">QUICK CONTACT</h2>
+      <ul class="socials"><li><a class="fb" href="#" aria-label="Facebook"><svg viewBox="1.2 1.2 21.6 21.6" preserveAspectRatio="none" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path class="fill" stroke-width=".9" d="M10.3 22V10.9a3.5 3.5 0 0 1 3.5-3.5h1.5v1.8h-1.3a1.6 1.6 0 0 0-1.6 1.6V22ZM8.3 11.7h6v1.5h-6Z"/></svg></a></li><li><a class="ig" href="#" aria-label="Instagram"><svg viewBox="3.2 3.2 17.6 17.6" preserveAspectRatio="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4.6"/><circle cx="12" cy="12" r="3.2"/><path d="M16.6 7.4v.01"/></svg></a></li><li><a class="x" href="#" aria-label="X"><svg viewBox="3.2 3.2 17.6 17.6" preserveAspectRatio="none" aria-hidden="true"><path d="M4 4l11.733 16h4.267l-11.733-16z"/><path d="M4 20l6.768-6.768m2.46-2.46L20 4"/></svg></a></li><li><a class="yt" href="#" aria-label="YouTube"><svg viewBox="1.2 4.2 21.6 15.6" preserveAspectRatio="none" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="3.8"/><path class="fill" d="M10.1 9.3 15.1 12 10.1 14.7Z"/></svg></a></li></ul>
+    </div>
+    <nav class="col col--quick" aria-label="Quick links">
+      <h2>Quick Links</h2>
+      <ul><li><a href="#">Home</a></li><li><a href="#">About Us</a></li><li><a href="#">Services</a></li><li><a href="#">Projects</a></li><li><a href="#">Contact Us</a></li></ul>
+    </nav>
+    <nav class="col col--support" aria-label="Support">
+      <h2>Support</h2>
+      <ul><li><a href="#">FAQs</a></li><li><a href="#">Support Center</a></li></ul>
+    </nav>
+    <address class="col col--touch" style="font-style:normal">
+      <h2>Get in Touch With Us</h2>
+      <ul><li><a href="tel:+263784244223">Phone: +263 7842 44 223</a></li><li><a href="mailto:info@lanitechsolutions.com">Email: info@lanitechsolutions.com</a></li><li><a href="mailto:sales@lanitechsolutions.com">Email: sales@lanitechsolutions.com</a></li><li><span>Address: Bulawayo Zimbabwe</span></li></ul>
+    </address>
+  </footer>
+</div>
+<script>
+(function () {
+  var btn = document.querySelector('.menu-btn'), menu = document.getElementById('mobile-menu');
+  function set(open) { btn.setAttribute('aria-expanded', open); btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu'); menu.classList.toggle('open', open); }
+  btn.addEventListener('click', function () { set(btn.getAttribute('aria-expanded') !== 'true'); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') set(false); });
+  document.addEventListener('click', function (e) { if (!menu.contains(e.target) && !btn.contains(e.target)) set(false); });
+  window.addEventListener('resize', function () { if (window.innerWidth >= 900) set(false); });
+
+  /* fit(): in the reflow layout, shrink the --k scale until header + footer fit
+     inside one viewport, so tablets and phones never scroll. */
+  var root = document.documentElement, page = document.querySelector('.page'),
+      top = document.querySelector('.top'), bottom = document.querySelector('.bottom'), raf = 0;
+  function fit() {
+    raf = 0;
+    if (window.innerWidth >= 1180) { root.style.removeProperty('--k'); return; }
+    /* start from a comfortable size (a little larger on tablets), then shrink to fit */
+    var k = Math.min(1.35, Math.max(1, window.innerWidth / (window.innerHeight > window.innerWidth ? 620 : 760))), MIN_GAP = 12;
+    var lines = document.querySelectorAll('.bottom .col li, .bottom .col h2'), rng = document.createRange();
+    root.style.setProperty('--k', k);
+    for (var i = 0; i < 12; i++) {
+      var r = (page.clientHeight) / (top.offsetHeight + bottom.offsetHeight + MIN_GAP);
+      var bb = bottom.getBoundingClientRect(), cs = getComputedStyle(bottom),
+          left = bb.left + parseFloat(cs.paddingLeft), right = bb.right - parseFloat(cs.paddingRight), far = 0;
+      for (var m = 0; m < lines.length; m++) {
+        rng.selectNodeContents(lines[m]); var rr = rng.getBoundingClientRect().right; if (rr > far) far = rr;
+      }
+      if (far > right + 0.5) r = Math.min(r, (right - left) / (far - left));
+      if (r >= 1) break;
+      k = Math.max(0.5, k * Math.max(0.88, r) - 0.004);
+      root.style.setProperty('--k', k.toFixed(4));
+      if (k === 0.5) break;
+    }
+  }
+  function schedule() { if (!raf) raf = requestAnimationFrame(fit); }
+  fit();
+  window.addEventListener('resize', schedule);
+  window.addEventListener('orientationchange', schedule);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', schedule);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule);
+})();
+</script>
+</body>
+</html>

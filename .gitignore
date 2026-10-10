@@ -1,0 +1,15 @@
+# Keep the repository limited to the deployable site and its instructions.
+/*
+!/.gitignore
+!/README.md
+!/public/
+!/public/**
+
+# Local tooling, credentials, and machine files.
+**/node_modules/
+**/.wrangler/
+**/.env*
+**/.dev.vars*
+**/*.log
+**/.DS_Store
+**/Thumbs.db
