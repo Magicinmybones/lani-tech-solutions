@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0f0f11">
 <title>Lani Tech Solutions</title>
+<script>
+// Set the first frame before the page is painted. A timed fallback keeps the
+// content visible if a later script cannot start the entrance.
+if (Element.prototype.animate && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  document.documentElement.classList.add('entrance-pending');
+  window.entranceFallback = setTimeout(function () {
+    document.documentElement.classList.remove('entrance-pending');
+  }, 3000);
+}
+</script>
 <style>
 @font-face{font-family:'Albert Sans';font-style:normal;font-weight:400;font-display:block;src:url(assets/albert-sans-400.woff2) format('woff2');}
 @font-face{font-family:'Albert Sans';font-style:normal;font-weight:600;font-display:block;src:url(assets/albert-sans-600.woff2) format('woff2');}
@@ -294,6 +304,21 @@ ul { list-style: none; margin: 0; padding: 0; }
   .bottom::after { height: calc(min(338 * var(--g), 12vh) * var(--k) + 10px); margin-top: 0; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* Opening frame only. The script removes this class after the single entrance. */
+.entrance-pending .brand--header,
+.entrance-pending .nav-pill,
+.entrance-pending .cta,
+.entrance-pending .menu-btn,
+.entrance-pending .brand--footer,
+.entrance-pending .qc-title,
+.entrance-pending .socials,
+.entrance-pending .col { opacity: 0; transform: translateY(9px); }
+.entrance-pending .tagline {
+  opacity: 0;
+  transform: translateY(10px);
+  clip-path: inset(0 0 100% 0);
+}
 </style>
 </head>
 <body>
@@ -411,6 +436,63 @@ ul { list-style: none; margin: 0; padding: 0; }
   window.addEventListener('orientationchange', schedule);
   if (window.visualViewport) window.visualViewport.addEventListener('resize', schedule);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule);
+})();
+</script>
+<script>
+(function () {
+  var root = document.documentElement;
+  if (!root.classList.contains('entrance-pending')) return;
+
+  // One compact score: orientation above, the brand and promise below, then
+  // the contact actions and three information groups. Backgrounds stay still.
+  var ease = 'cubic-bezier(.22, 1, .36, 1)';
+  var pace = window.innerWidth < 900 ? .88 : 1;
+  var cues = [
+    ['.brand--header', .04, .62, 8],
+    ['.nav-pill', .15, .62, 7],
+    ['.menu-btn', .15, .62, 7],
+    ['.cta', .28, .58, 7],
+    ['.brand--footer', .25, .72, 10],
+    ['.tagline', .43, .82, 10, true],
+    ['.qc-title', .72, .60, 8],
+    ['.socials', .90, .60, 8],
+    ['.col--quick', .80, .68, 10],
+    ['.col--support', .91, .68, 10],
+    ['.col--touch', 1.02, .68, 10]
+  ];
+  var animations = [];
+  function finish() {
+    clearTimeout(window.entranceFallback);
+    root.classList.remove('entrance-pending');
+    animations.forEach(function (animation) { animation.cancel(); });
+  }
+  function play() {
+    if (!root.classList.contains('entrance-pending')) return;
+    try {
+      cues.forEach(function (cue) {
+        var element = document.querySelector(cue[0]);
+        if (!element || getComputedStyle(element).display === 'none') return;
+        var first = { opacity: 0, transform: 'translateY(' + cue[3] + 'px)' };
+        var last = { opacity: 1, transform: 'none' };
+        if (cue[4]) {
+          first.clipPath = 'inset(0 0 100% 0)';
+          last.clipPath = 'inset(0 0 0 0)';
+        }
+        animations.push(element.animate([first, last], {
+          duration: cue[2] * pace * 1000,
+          delay: cue[1] * pace * 1000,
+          easing: ease,
+          fill: 'both'
+        }));
+      });
+      Promise.all(animations.map(function (animation) { return animation.finished; }))
+        .then(finish, finish);
+    } catch (error) {
+      finish();
+    }
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(play, finish);
+  else play();
 })();
 </script>
 </body>
